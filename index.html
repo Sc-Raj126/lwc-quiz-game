@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LWC QuizMaster - Interactive Quiz App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .quiz-container {
+            display: none;
+        }
+        
+        .quiz-container.active {
+            display: block;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .option {
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .option.correct {
+            border-color: #4caf50;
+            background: #4caf50;
+            color: white;
+        }
+        
+        .option.incorrect {
+            border-color: #f44336;
+            background: #f44336;
+            color: white;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9ff;
+        }
+        
+        .results {
+            display: none;
+            text-align: center;
+        }
+        
+        .results.active {
+            display: block;
+        }
+        
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .results h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .results p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .leaderboard {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .leaderboard h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .leaderboard-rank {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 QuizMaster LWC</h1>
+            <p>Test your Salesforce knowledge - Lightning Web Components Edition</p>
+        </div>
+        
+        <!-- Quiz Section -->
+        <div class="quiz-container active">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="question-number" id="questionNumber">Question 1 of 5</div>
+            <div class="question-card">
+                <div class="question-text" id="question"></div>
+                <div class="options" id="optionsContainer"></div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-secondary" onclick="previousQuestion()">← Previous</button>
+                <button class="btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="results" id="resultsContainer">
+            <div class="score-circle" id="scoreCircle">0/5</div>
+            <h2>Quiz Complete!</h2>
+            <p id="resultMessage"></p>
+            
+            <div class="leaderboard">
+                <h3>📊 Leaderboard</h3>
+                <div class="leaderboard-item">
+                    <span><span class="leaderboard-rank">🥇 You</span> - Today</span>
+                    <span id="yourScore">0/5</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span><span class="leaderboard-rank">🥈 Expert</span> - All Time</span>
+                    <span>5/5</span>
+                </div>
+                <div class="leaderboard-item">
+                    <span><span class="leaderboard-rank">🥉 Intermediate</span> - All Time</span>
+                    <span>4/5</span>
+                </div>
+            </div>
+            
+            <div class="buttons" style="margin-top: 30px;">
+                <button class="btn-primary" onclick="restartQuiz()">🔄 Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const quizData = [
+            {
+                question: "What is Lightning Web Components (LWC)?",
+                options: [
+                    "A JavaScript framework for building UI components",
+                    "A Salesforce-specific web component framework",
+                    "Only for backend development",
+                    "A deprecated technology"
+                ],
+                correct: 1
+            },
+            {
+                question: "Which decorator is used to bind properties in LWC?",
+                options: [
+                    "@bind",
+                    "@property",
+                    "@wire",
+                    "@api"
+                ],
+                correct: 3
+            },
+            {
+                question: "How do you expose a property to a parent component in LWC?",
+                options: [
+                    "Using @property decorator",
+                    "Using @api decorator",
+                    "Using public keyword",
+                    "Properties are always public by default"
+                ],
+                correct: 1
+            },
+            {
+                question: "What is the @wire decorator used for?",
+                options: [
+                    "To wire JavaScript functions",
+                    "To connect to Salesforce data imperatively",
+                    "To provision fields reactively from Salesforce data",
+                    "To define event listeners"
+                ],
+                correct: 2
+            },
+            {
+                question: "In LWC, what method is called when a component is inserted into the DOM?",
+                options: [
+                    "connectedCallback()",
+                    "renderedCallback()",
+                    "disconnectedCallback()",
+                    "errorCallback()"
+                ],
+                correct: 0
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = new Array(quizData.length).fill(-1);
+        let answered = false;
+        
+        function displayQuestion() {
+            const question = quizData[currentQuestion];
+            document.getElementById('question').textContent = question.question;
+            document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+            
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                if (answers[currentQuestion] === index) optionDiv.classList.add('selected');
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            document.getElementById('nextBtn').disabled = answers[currentQuestion] === -1;
+        }
+        
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            displayQuestion();
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                displayQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                displayQuestion();
+            }
+        }
+        
+        function finishQuiz() {
+            score = answers.reduce((total, answer, index) => {
+                return total + (answer === quizData[index].correct ? 1 : 0);
+            }, 0);
+            
+            document.querySelector('.quiz-container').classList.remove('active');
+            document.getElementById('resultsContainer').classList.add('active');
+            document.getElementById('scoreCircle').textContent = `${score}/${quizData.length}`;
+            document.getElementById('yourScore').textContent = `${score}/${quizData.length}`;
+            
+            let message = '';
+            if (score === quizData.length) message = "Perfect! You're an LWC Expert! 🎉";
+            else if (score >= 4) message = "Excellent! Strong LWC knowledge! 👏";
+            else if (score >= 3) message = "Good job! Keep learning LWC! 📚";
+            else if (score >= 1) message = "Not bad! Review LWC concepts and try again.";
+            else message = "Keep practicing LWC fundamentals!";
+            
+            document.getElementById('resultMessage').textContent = message;
+        }
+        
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            answers = new Array(quizData.length).fill(-1);
+            document.querySelector('.quiz-container').classList.add('active');
+            document.getElementById('resultsContainer').classList.remove('active');
+            displayQuestion();
+        }
+        
+        // Initialize
+        displayQuestion();
+    </script>
+</body>
+</html>
