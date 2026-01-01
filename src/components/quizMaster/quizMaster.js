@@ -42,7 +42,7 @@ export default class QuizMaster extends LightningElement {
 
     get progressStyle() {
         let percent = ((this.currentQuestion + 1) / this.totalQuestions) * 100;
-        return `width: ${percent}%`;
+        return `width: ${percent}%;`;
     }
 
     get accuracy() {
