@@ -1,0 +1,133 @@
+<template>
+  <div class="quiz-container">
+    <!-- Background particles -->
+    <div class="particle-background">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="quiz-header">
+      <div class="logo-box">
+        <svg class="logo-icon" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <h1>LWC QuizMaster</h1>
+      </div>
+      <p class="header-subtitle">Master Lightning Web Components</p>
+    </header>
+
+    <!-- Quiz Section -->
+    <template if:true={isQuizActive}>
+      <section class="quiz-section">
+        <!-- Progress -->
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" style={progressStyle}></div>
+          </div>
+          <span class="progress-text">{currentQuestion + 1} / {totalQuestions}</span>
+        </div>
+
+        <!-- Question Card -->
+        <article class="question-card" data-testid="question-card">
+          <div class="question-header">
+            <span class="question-badge">Question {currentQuestion + 1}</span>
+            <h2 class="question-text">{question.question}</h2>
+          </div>
+
+          <!-- Options -->
+          <div class="options-grid">
+            <template for:each={question.options} for:item="option" for:index="index">
+              <button
+                key={index}
+                class={getOptionClass(index)}
+                onclick={handleOptionClick}
+                data-index={index}
+                disabled={isAnswered}
+              >
+                <span class="option-letter">{getOptionLetter(index)}</span>
+                <span class="option-text">{option}</span>
+                <span class="option-checkmark" if:true={isOptionSelected(index)}>✓</span>
+              </button>
+            </template>
+          </div>
+        </article>
+
+        <!-- Navigation -->
+        <nav class="quiz-navigation">
+          <button class="btn btn-secondary" onclick={handlePrevious} disabled={currentQuestion === 0}>
+            ← Previous
+          </button>
+          <button class="btn btn-primary" onclick={handleNext} disabled={!isAnswered}>
+            {currentQuestion === totalQuestions - 1 ? 'Finish' : 'Next'} →
+          </button>
+        </nav>
+      </section>
+    </template>
+
+    <!-- Results Section -->
+    <template if:true={isResultsActive}>
+      <section class="results-section">
+        <div class="results-card">
+          <!-- Score Circle -->
+          <div class="score-circle" style={scoreCircleStyle}>
+            <div class="score-value">{score}</div>
+            <div class="score-total">/ {totalQuestions}</div>
+          </div>
+
+          <!-- Result Message -->
+          <h2 class="result-title">Quiz Complete! 🎉</h2>
+          <p class="result-message">{resultMessage}</p>
+
+          <!-- Stats -->
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-label">Correct</span>
+              <span class="stat-value correct">{score}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Incorrect</span>
+              <span class="stat-value incorrect">{totalQuestions - score}</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Accuracy</span>
+              <span class="stat-value accuracy">{accuracy}%</span>
+            </div>
+          </div>
+
+          <!-- Leaderboard -->
+          <div class="leaderboard">
+            <h3>🏆 Leaderboard</h3>
+            <ul class="leaderboard-list">
+              <li class="leaderboard-item your-score">
+                <span class="rank">🥇</span>
+                <span class="name">You (Today)</span>
+                <span class="points">{score}/{totalQuestions}</span>
+              </li>
+              <li class="leaderboard-item">
+                <span class="rank">🥈</span>
+                <span class="name">Expert</span>
+                <span class="points">5/5</span>
+              </li>
+              <li class="leaderboard-item">
+                <span class="rank">🥉</span>
+                <span class="name">Intermediate</span>
+                <span class="points">4/5</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="results-actions">
+            <button class="btn btn-primary btn-large" onclick={handleRestart}>
+              🔄 Restart Quiz
+            </button>
+          </div>
+        </div>
+      </section>
+    </template>
+  </div>
+</template>
